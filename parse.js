@@ -1,4 +1,5 @@
 var request = require('request');
+var url = require('url');
 var cheerio = require('cheerio');
 var mongoose = require('mongoose');
 
@@ -28,7 +29,10 @@ db.once('connected', function () {
 });
 
 function addSourceData(items, source) {
+	var sourceUrl = url.parse(source.endpoint);
+	var basePath = sourceUrl.protocol + '//' + sourceUrl.host + '/';
 	return items.map(function(item) {
+		item.url = url.resolve(basePath, item.url);
 		item.market = source.market;
 		item.endpoint = source.endpoint;
 		item.currency = source.currency;
