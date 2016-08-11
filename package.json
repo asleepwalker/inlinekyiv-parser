@@ -2,7 +2,13 @@
   "name": "inlinekyiv",
   "version": "0.0.1",
   "description": "Inline skate markets parser",
-  "author": "Artyom \"Sleepwalker\" Fedosov",
+  "author": "Artyom 'Sleepwalker' Fedosov <mail@asleepwalker.ru>",
+  "main": "parse.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asleepwalker/inlinekyiv-parser"
+  },
+  "private": true,
   "license": "MIT",
   "dependencies": {
     "request": "~2.74.0",
