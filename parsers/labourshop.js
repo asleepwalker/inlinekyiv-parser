@@ -8,7 +8,7 @@ module.exports = function($) {
 		if (name && price && url) {
 			items.push({
 				name: name,
-				price: price,
+				price: price.replace(/[^\d.,]/g, ''),
 				url: url
 			});
 		}
