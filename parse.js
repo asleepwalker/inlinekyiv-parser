@@ -9,10 +9,13 @@ var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('connected', function () {
 	var sourceModel = require('./models/source');
-	var itemSchema = require('./models/item');
+	var itemModel = require('./models/item');
 
 	sourceModel.findOne().sort('lastupdate').exec(function (err, source) {
 		if (err) return console.error(err);
+
+		source.lastupdate = Date.now();
+		source.save();
 		
 		var parser = require('./parsers/' + source.service);
 		request({
@@ -22,7 +25,9 @@ db.once('connected', function () {
 		}, function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				var items = parser(cheerio.load(body));
-				console.log(addSourceData(items, source));
+				addSourceData(items, source).map(function(item) {
+					itemModel.update({ url: item.url }, { $set: item }, { upsert: true }, function() {});
+				});
 			}
 		});
 	});
@@ -36,6 +41,7 @@ function addSourceData(items, source) {
 		item.market = source.market;
 		item.endpoint = source.endpoint;
 		item.currency = source.currency;
+		item.lastupdate = Date.now();
 		return item;
 	});
 }
