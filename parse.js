@@ -25,8 +25,16 @@ db.once('connected', function () {
 		}, function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				var items = parser(cheerio.load(body));
-				addSourceData(items, source).map(function(item) {
-					itemModel.update({ url: item.url }, { $set: item }, { upsert: true }, function() {});
+				addSourceData(items, source);
+				Promise.all(items.map(function(item, index) {
+					return new Promise(function(resolve, reject) {
+						itemModel.update({ url: item.url }, { $set: item }, { upsert: true }, function(err) {
+							return !err ? resolve(item.name) : reject(err);
+						});
+					});
+				})).then(function() {
+					console.log(items);
+					mongoose.disconnect();
 				});
 			}
 		});
