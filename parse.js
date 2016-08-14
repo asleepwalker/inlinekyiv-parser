@@ -10,7 +10,7 @@ connection.connect();
 connection.on('error', function(err) { console.log(err); });
 
 // Get the oldest data source
-connection.query('select * from as_sources order by lastupdate limit 0,1', function (err, sources) {
+connection.query('select * from as_sources where id = 1 order by lastupdate limit 0,1', function (err, sources) {
 	if (err) return console.error(err);
 
 	var source = sources[0];
@@ -42,12 +42,16 @@ function upsertItems(items, source) {
 			') values ( ' +
 				'"' + source.market + '", ' +
 				'"' + source.id + '", ' +
-				'"' + item.name + '", ' +
-				'"' + item.price + '", ' +
+				'"' + connection.escape(item.name) + '", ' +
+				'"' + connection.escape(item.price) + '", ' +
 				'"' + source.currency + '", ' +
-				'"' + url.resolve(basePath, item.url) + '", ' +
+				'"' + connection.escape(url.resolve(basePath, item.url)) + '", ' +
 				'NOW()' +
-			')';
+			') on duplicate key update ' +
+				'name = "' + connection.escape(item.name) + '", ' +
+				'price = "' + connection.escape(item.price) + '", ' +
+				'currency = "' + source.currency + '", ' +
+				'lastupdate = NOW()';
 			connection.query(query, function(err) {
 				return !err ? resolve() : reject(err);
 			});
