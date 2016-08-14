@@ -10,13 +10,13 @@ connection.connect();
 connection.on('error', function(err) { console.log(err); });
 
 // Get the oldest data source
-connection.query('select * from as_sources where id = 1 order by lastupdate limit 0,1', function (err, sources) {
+connection.query('select * from as_sources order by lastupdate limit 0,1', function (err, sources) {
 	if (err) return console.error(err);
 
 	var source = sources[0];
 
 	// Move to the end of list
-	connection.query('update as_sources set lastupdate = NOW() where id = ' + source.id);
+	connection.query('update as_sources set lastupdate = NOW() where id = ' + mysql.escape(source.id));
 
 	var parser = require('./parsers/' + source.service);
 	request({
@@ -37,24 +37,26 @@ function upsertItems(items, source) {
 	var basePath = sourceUrl.protocol + '//' + sourceUrl.host + '/';
 	return Promise.all(items.map(function(item, index) {
 		return new Promise(function(resolve, reject) {
-			var query = 'insert into as_items ( ' +
-				'market, source, name, price, currency, url, lastupdate' +
-			') values ( ' +
-				'"' + source.market + '", ' +
-				'"' + source.id + '", ' +
-				'"' + connection.escape(item.name) + '", ' +
-				'"' + connection.escape(item.price) + '", ' +
-				'"' + source.currency + '", ' +
-				'"' + connection.escape(url.resolve(basePath, item.url)) + '", ' +
-				'NOW()' +
-			') on duplicate key update ' +
-				'name = "' + connection.escape(item.name) + '", ' +
-				'price = "' + connection.escape(item.price) + '", ' +
-				'currency = "' + source.currency + '", ' +
-				'lastupdate = NOW()';
+			var query = getUpsertQuery({
+				market: mysql.escape(source.market),
+				source: mysql.escape(source.id),
+				name: mysql.escape(item.name),
+				price: mysql.escape(item.price),
+				currency: mysql.escape(source.currency),
+				url: mysql.escape(url.resolve(basePath, item.url))
+			});
 			connection.query(query, function(err) {
 				return !err ? resolve() : reject(err);
 			});
 		});
 	}));
+}
+
+function getUpsertQuery(d) {
+	return 'insert into as_items ( ' +
+		'market, source, name, price, currency, url, lastupdate' +
+	') values (' +
+		[d.market, d.source, d.name, d.price, d.currency, d.url].join() + ', NOW()' +
+	') on duplicate key update ' +
+		'name = ' + d.name + ', price = ' + d.price + ', currency = ' + d.currency + ', lastupdate = NOW()';
 }
