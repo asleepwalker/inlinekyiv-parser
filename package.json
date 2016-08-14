@@ -13,6 +13,6 @@
   "dependencies": {
     "request": "~2.74.0",
     "cheerio": "~0.20.0",
-    "mongoose": "~4.5.8"
+    "mysql": "~2.11.1"
   }
 }
