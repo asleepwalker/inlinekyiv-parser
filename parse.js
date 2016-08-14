@@ -22,9 +22,16 @@ connection.query('select * from as_sources order by lastupdate limit 0,1', funct
 	request({
 		uri: source.endpoint,
 		method: source.method,
+		encoding: !source.encoding ? 'utf8' : null, // null for binary, which is convertable by iconv
 		form: source.payload ? JSON.parse(source.payload) : undefined
 	}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
+			if (source.encoding) {
+				var Iconv = require('iconv').Iconv;
+				var translator = new Iconv(source.encoding, 'utf-8');
+				body = translator.convert(body).toString();
+			}
+
 			var items = parser(cheerio.load(body));
 			upsertItems(items, source)
 				.then(function() { connection.end(); });
