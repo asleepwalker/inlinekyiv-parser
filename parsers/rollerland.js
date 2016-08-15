@@ -9,7 +9,11 @@ module.exports = function($) {
 			.replace(/[^\d.,]/g, '') // Remove anything but number
 			.trim());
 		var url = $el.find('.title a').attr('href');
-		if (name && price && url) {
+
+		var itemText = $el.text();
+		var available = itemText.indexOf('Нет на складе') == -1 && itemText.indexOf('Снят с производства') == -1;
+
+		if (available && name && price && url) {
 			items.push({
 				name: name,
 				price: price,
